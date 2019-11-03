@@ -1,4 +1,4 @@
----
+author: "Elmeri Santala"
 title: "IODS course project"
 output:
   html_document:
