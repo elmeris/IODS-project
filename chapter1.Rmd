@@ -1,4 +1,4 @@
-I'm excited about the course. I expect to learn how to use R. Reijo Sund told me about the course. https://elmeris.github.io/IODS-project/ 
+I'm excited about the course. I expect to learn how to use R. Reijo Sund told me about the course. https://github.com/elmeris/IODS-project
 # About the project
 
 *Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you can use R Markdown syntax.*
