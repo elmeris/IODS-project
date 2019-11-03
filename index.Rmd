@@ -1,5 +1,6 @@
-author: "Elmeri Santala"
+---
 title: "IODS course project"
+author: "Elmeri Santala"
 output:
   html_document:
     theme: cosmo
