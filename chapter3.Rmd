@@ -1,7 +1,4 @@
---
-Tittle: Exercise3: Analysis
---
-Author: Elmeri Santala
+# Exercise3: Analysis
 
 **Data wrangling**
 I read the data from URL web page, joined the two data sets using the variables "school", "sex", "age", "address", "famsize", "Pstatus", "Medu", "Fedu", "Mjob", "Fjob", "reason", "nursery","internet" as (student) identifiers. I Kept only the students present in both data sets. Then, I took the average of the answers related to weekday and weekend alcohol consumption to create a new column 'alc_use' to the joined data. Then I used 'alc_use' to create a new logical column 'high_use' which is TRUE for students for which 'alc_use' is greater than 2 (the range is: from 1 - very low to 5 - very high).
