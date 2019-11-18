@@ -1,0 +1,169 @@
+--
+Tittle: Exercise3: Analysis
+--
+Author: Elmeri Santala
+
+**Data wrangling**
+I read the data from URL web page, joined the two data sets using the variables "school", "sex", "age", "address", "famsize", "Pstatus", "Medu", "Fedu", "Mjob", "Fjob", "reason", "nursery","internet" as (student) identifiers. I Kept only the students present in both data sets. Then, I took the average of the answers related to weekday and weekend alcohol consumption to create a new column 'alc_use' to the joined data. Then I used 'alc_use' to create a new logical column 'high_use' which is TRUE for students for which 'alc_use' is greater than 2 (the range is: from 1 - very low to 5 - very high).
+
+Code for data wrangling: 
+https://github.com/elmeris/IODS-project/blob/master/data/create_alc.R
+
+**Reading data**
+```{r}
+alc <- read.csv("~/IODS-project/data/alc.csv")
+head(alc)
+colnames(alc)
+```
+**Description of the data**
+This data has 385 observations for 35 variables.
+This combined data is from two different schools and it is about 15-22 year old students success in mathematics and portuguese language. S
+The survey included the following variables:
+student's school, student's sex, student's age, student's home address, family size, parent's cohabitation status, mother's education, father's education, mother's job, father's job, reason to choose this school, student's guardian, home to school travel time, weekly study time, number of past class failures, extra educational support, family educational support, extra paid classes within the course subject (Math or Portuguese), extra-curricular activities, attended nursery school, wants to take higher education, Internet access at home, a romantic relationship, quality of family relationships, free time after school, going out with friends, workday alcohol consumption, weekend alcohol consumption, current health status, number of school absences and grades in the course subject, Math or Portuguese: first period grade,  second period grade and final grade.
+
+**My analysis from data**
+
+I am interested in the relationships between high/low alcohol consumption and these four variables: 
+student's sex (male or female), 
+number of school absences (numeric: from 0 to 93),
+final grade (numeric: from 0 to 20, output target),
+age - student's age (numeric: from 15 to 22).
+
+My hypotesis are:
+1) Men consume more alcohol 
+2) Students with lower grades consume more alcohol
+3) Students with more absences consume more alcohol
+4) Older students consume more alcohol 
+
+Lets find out!
+
+```{r}
+library(tidyr); library(dplyr); library(ggplot2)
+```
+
+```{r}
+glimpse(alc) 
+```
+
+```{r}
+gather(alc) %>% glimpse
+```
+
+```{r}
+gather(alc) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()
+```
+
+```{r}
+library(dplyr); library(ggplot2)
+```
+
+
+```{r}
+alc %>% group_by(sex, high_use) %>% summarise(count = n(), mean_grade = mean(G3))
+```
+As we can see in the table above that it seems that my first hypothesis was maybe right because men consume more alcohol than women. Yet I dont know is this difference statistically significant or not.
+
+```{r}
+g1 <- ggplot(alc, aes(x = high_use, y = G3, col = sex))
+```
+
+```{r}
+g1 + geom_boxplot() + ylab("grade")
+```
+As the boxplot above shows the students with lower final grade consume more alcohol. This means my second hypothesis was maybe right. Yet I dont know is this difference statistically significant or not.
+
+```{r}
+g2 <- ggplot(alc, aes(x = high_use, y = absences, col = sex))
+```
+
+
+```{r}
+g2 + geom_boxplot() + ggtitle("Student absences by alcohol consumption and sex")
+```
+As the boxplot above shows the students with more absences consume more alcohol. This means my third hypothesis was maybe right. Yet I dont know is this difference statistically significant or not.
+
+```{r}
+g3 <- ggplot(alc, aes(x = high_use, y = age, col = sex))
+```
+
+```{r}
+g3 + geom_boxplot() + ggtitle("Student age by alcohol consumption and sex")
+```
+As the boxplot above shows the older male students and younger female students consume more alcohol. This means my second hypothesis was maybe right with male students but not with female students. Yet I dont know is this difference statistically significant or not.
+
+```{r}
+m <- glm(high_use ~ age + G3 + absences + sex, data = alc, family = "binomial")
+```
+
+```{r}
+summary(m)
+```
+
+```{r}
+coef(m)
+```
+
+```{r}
+m <- glm(high_use ~ age + G3 + absences + sex, data = alc, family = "binomial")
+```
+
+```{r}
+OR <- coef(m) %>% exp
+```
+
+```{r}
+CI <- confint(m) %>% exp
+```
+
+```{r}
+cbind(OR, CI)
+```
+The fitted logistic regression model demonstrate that two of my chosen variables: absences and sex are statistically significant in relation to alcohol consumption. These variables have a p-value of <0.001. 
+
+The two other variables: age and final grade did not show statistical significance in relation to alcohol consumption.
+
+Let's take a closer look at statistically significant variables.
+Absences: 
+Odds ratio shows us that the odds of higher alcohol consumption increases 1.08 times when the number of absences increase one unit. 
+(95% Cl 1.05-1.15)
+
+Sex: Odds ratio shows us that the male students have higher alcohol consumption 2.7 times more likely than female students.
+(95% Cl 1.68-4.34)
+
+
+**Prediction of the probability of high_use**
+
+```{r}
+probabilities <- predict(m, type = "response")
+```
+
+```{r}
+alc <- mutate(alc, probability = probabilities)
+```
+
+```{r}
+alc <- mutate(alc, prediction = probability > 0.5)
+```
+
+```{r}
+table(high_use = alc$high_use, prediction = alc$prediction)
+```
+
+```{r}
+table(high_use = alc$high_use, prediction = alc$prediction) %>% prop.table %>% addmargins
+```
+These tables shows us that in 339 false (low alcohol use) predictions 255 were really false, thats about 75%, and in 43 true (high alcohol use) predictions 30 were really true, thats about 70%.
+
+**Visualizing the prediction of the probability of high_use**
+```{r}
+library(dplyr); library(ggplot2)
+```
+
+```{r}
+g <- ggplot(alc, aes(x = probability, y = high_use, col = prediction))
+```
+
+```{r}
+g + geom_point()
+```
+This plot shows us that the prediction of correct classification is quite good, but there is some misclassifications with this model.
