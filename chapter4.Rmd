@@ -5,15 +5,17 @@ date: "11/24/2019"
 output: html_document
 ---
 
-# Exercise4 / Clustering and classification: Analysis
+# Exercise 4 / Clustering and classification: Analysis
 
-## Task1 / strarting
+## Task 1
+### 1.1 strarting
 
 I created a new RMarkdown file and saved it as an empty file named ‘chapter4.Rmd’. Then I included the file as a child file in my ‘index.Rmd’ file.
 
 This week I used the Boston Housing Dataset for the exercise
 
-## Task2 / Loading and exploring the structure and the dimensions of the data
+## Task 2
+### 2.1 Loading and exploring the structure and the dimensions of the data
 
 ```{r echo=FALSE}
 library(dplyr)
@@ -45,7 +47,8 @@ VARIABLE           |   DESCRIPTION
  ```"LSTAT"```     |  % lower status of the population
  ```"MEDV"```      |  Median value of owner-occupied homes in $1000's
 
-## Task3 / Graphical overview of the data and summaries of the variables in the data
+## Task 3
+### 3.1 Graphical overview of the data and summaries of the variables in the data
 
 ```{r echo=FALSE}
 pairs(Boston)
@@ -76,7 +79,7 @@ The graphical display of a correlation matrix shows us the correlation between p
 ***Summaries of thevariables***
 The summary shows the minimum and maximum values, quarters, and mean for each variable. For example for the variable the mean value is 0.5547.
 
-## Task4
+## Task 4
 ### 4.1 Standardizing the dataset and printing out summaries of the scaled data.
 
 ```{r echo=FALSE}
