@@ -1,0 +1,240 @@
+---
+title: "chapter4.Rmd"
+author: "Elmeri Santala"
+date: "11/24/2019"
+output: html_document
+---
+
+# Exercise4 / Clustering and classification: Analysis
+
+## Task1 / strarting
+
+I created a new RMarkdown file and saved it as an empty file named ‘chapter4.Rmd’. Then I included the file as a child file in my ‘index.Rmd’ file.
+
+This week I used the Boston Housing Dataset for the exercise
+
+## Task2 / Loading and exploring the structure and the dimensions of the data
+
+```{r echo=FALSE}
+library(dplyr)
+library(MASS)
+data("Boston")
+str(Boston)
+dim(Boston)
+colnames(Boston)
+```
+**Description**
+The Boston Housing Dataset is a derived from information collected by the U.S. Census Service concerning housing in the area of Boston MA. 
+The Boston data frame has 506 rows and 14 columns.
+The following describes the dataset columns:
+
+VARIABLE           |   DESCRIPTION
+-----------------  | -------------------------------------------------------------------------------
+ ```"CRIM"```      |  per capita crime rate by town
+ ```"ZN"```        |  proportion of residential land zoned for lots over 25,000 sq.ft.
+ ```"INDUS"```     |  proportion of non-retail business acres per town.
+ ```"CHAS"```      |  Charles River dummy variable (1 if tract bounds river; 0 otherwise) 
+ ```"NOX"```       |  nitric oxides concentration (parts per 10 million)
+ ```"RM"```        |  average number of rooms per dwelling 
+ ```"AGE"```       |  proportion of owner-occupied units built prior to 1940
+ ```"DIS"```       |  weighted distances to five Boston employment centres
+ ```"RAD"```       |  index of accessibility to radial highways
+ ```"TAX"```       |  full-value property-tax rate per $10,000
+ ```"PTRATIO"```   |  upil-teacher ratio by town
+ ```"B - 1000(Bk - 0.63)^2"```|  where Bk is the proportion of blacks by town
+ ```"LSTAT"```     |  % lower status of the population
+ ```"MEDV"```      |  Median value of owner-occupied homes in $1000's
+
+## Task3 / Graphical overview of the data and summaries of the variables in the data
+
+```{r echo=FALSE}
+pairs(Boston)
+summary(Boston)
+```
+```{r echo=FALSE}
+cor_matrix<-cor(Boston) %>% round(digits = 2)
+```
+
+```{r echo=FALSE}
+cor_matrix
+```
+
+```{r echo=FALSE}
+library(corrplot)
+```
+
+```{r echo=FALSE}
+corrplot(cor_matrix, method="circle", type = "upper", cl.pos="b", tl.pos="d", tl.cex = 0.6)
+```
+
+**Description**
+***The graphical overview:***
+First graph gives us some info about which combination of varibles produces some kind of clusters. For example ``rad age``seems to produse some clusters.
+
+The graphical display of a correlation matrix shows us the correlation between pairs of variables. For exemple the correlation between variables tax and rad is high. 
+
+***Summaries of thevariables***
+The summary shows the minimum and maximum values, quarters, and mean for each variable. For example for the variable the mean value is 0.5547.
+
+## Task4
+### 4.1 Standardizing the dataset and printing out summaries of the scaled data.
+
+```{r echo=FALSE}
+boston_scaled <- scale(Boston)
+summary(boston_scaled)
+class(boston_scaled)
+boston_scaled <- as.data.frame(boston_scaled)
+```
+**Description**
+After standardization, the mean of all variables is zero. Also the minimum, maximum, and quarters values have changed.
+
+### 4.2 Creating a categorical variable of the crime rate and dropping the old crime rate variable from the dataset.
+
+```{r echo=FALSE}
+bins <- quantile(boston_scaled$crim)
+bins
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels = c("low", "med_low", "med_high", "high"))
+table(crime)
+```
+
+```{r echo=FALSE}
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+```
+
+**Description**
+I used the quantiles as the break points in the new crime categorical variable. This new variable has the following categories: ***low, med_low, med_high, high***.
+The old crime rate variable is now dropped from the dataset.
+
+### 4.3 Dividing the dataset to train and test sets, so that 80% of the data belongs to the train set
+
+```{r echo=FALSE}
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+```
+
+## Task 5
+### 5.1 Fitting the linear discriminant analysis on the train set by using the categorical crime rate as the target variable and all the other variables in the dataset as predictor variables.
+
+```{r echo=FALSE}
+lda.fit <- lda(crime ~ ., data = train)
+lda.fit
+```
+
+### 5.2 Drawing the LDA (bi)plot.
+
+```{r echo=FALSE}
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "orange", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+classes <- as.numeric(train$crime)
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 1)
+```
+**Description**
+***5.1***
+First we'll see prior probabilities of groups of our new crime variable.
+For example prior probability of category high is 0.2425743.
+
+Next we'll see the means of our scaled variables in the four crime categories.
+For example mean of the zn in the category low is 0.96775094.
+
+Then we'll see coefficients of linear discriminants output which provides the linear combination of predictor variables that are used to form the LDA decision rule.
+For example LD1 for medv is 0.18357863.
+
+In the last section we'll see proportion of trace which is the proportion of crime categories that is explained by successive discriminant functions.
+As we can see the LD1 has highest proportion of trace.
+
+***5.2***
+From the graph we can see that correlation between ``rad zn`` and ``zn nox`` is pretty low. As we know already from the task 3 those correlations are :
+``rad zn`` -0.31
+``zn nox`` -0.52
+Also we can see that variable rad is the feature contributing to LD1 dimension.
+
+## Task 6
+### 6.1 Saving the crime categories from the test set and then removing the categorical crime variable from the test dataset.
+
+```{r echo=FALSE}
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+```
+
+### 6.2 Predicting the classes with the LDA model on the test data. Then cross tabulating the results with the crime categories from the test set.
+
+```{r echo=FALSE}
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = correct_classes, predicted = lda.pred$class)
+```
+**Describtion**
+Here we can see that the prediction of the classes is correct in:
+``low`` 61% of cases
+``med_low``41% of cases
+``med_high``78% of cases
+``high``100% of cases
+
+## Task 7
+### 7.1 Reloading the Boston dataset and standardizing the dataset
+
+```{r}
+library(MASS)
+data("Boston")
+boston_scaled <- scale(Boston)
+summary(boston_scaled)
+class(boston_scaled)
+boston_scaled <- as.data.frame(boston_scaled)
+```
+
+### 7.2 Distances between the observations
+
+```{r echo=FALSE}
+dist_eu <- dist(boston_scaled)
+summary(dist_eu)
+dist_man <- dist(boston_scaled, method = 'manhattan')
+summary(dist_man)
+```
+**Description**
+Distance between the observations calculated with two different methods:
+``Euclidian distances`` (Ordinary" straight-line distance between two points in Euclidean space) and
+``Manhattan distances``(The distance between two points measured along axes at right angles).
+This case Euclidian distance mean is 4.9111 and median 4.8241 and Manhattan distance mean is 13.5488 and median 12.6090.
+
+### 7.3 Runing k-means algorithm on the dataset and visualizing the cluster.
+
+```{r echo=FALSE}
+set.seed(123)
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled, k)$tot.withinss})
+```
+
+```{r echo=FALSE}
+library(ggplot2)
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+```
+**Description**
+For investigating what is the optimal number of clusters I will use the elbow method:
+
+1. Compute clustering algorithm (e.g., k-means clustering) for different values of k. For instance, by varying k from 1 to 10 clusters
+2. For each k, calculate the total within-cluster sum of square (wss)
+3. Plot the curve of wss according to the number of clusters k.
+4. The location of a bend (knee) in the plot is generally considered as an indicator of the appropriate number of clusters.
+
+I will say that optimal number of clusters in this case is 2.
+
+### 7.4 Running the algorithm again and visualizing the cluster.
+
+```{r echo=FALSE}
+km <-kmeans(boston_scaled, centers = 2)
+pairs(boston_scaled, col = km$cluster)
+```
+**Description**
+The graph shows us that which combinations of two variables distinguish the two clusters.
+For example ``tax age``distinguish the two clusters quite well also ``tax``with many other variables distinguish the two clusters quite well.
+
+
