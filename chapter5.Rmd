@@ -1,0 +1,228 @@
+---
+title: "chapter5.Rmd"
+author: "Elmeri Santala"
+date: "12/2/2019"
+output: html_document
+---
+# Exercise 5 / Dimensionality reduction techniques
+
+## Datawrangling
+### Datawrangling part1 / last weeks exercise
+Code for last weeks datawrangling is here:
+https://github.com/elmeris/IODS-project/blob/master/data/human.R
+
+The data is combination of  Human Development Index (HDI) data and Gender Inequality Index (GII) data. Data is collected by United Nations Development Programme. 
+
+The Human Development Index (HDI) is a summary measure of average achievement in key dimensions of human development: a long and healthy life, being knowledgeable and have a decent standard of living. 
+More info about HDI here: http://hdr.undp.org/en/content/human-development-index-hdi
+
+The GII is an inequality index. It measures gender inequalities in three important aspects of human development—reproductive health, measured by maternal mortality ratio and adolescent birth rates; empowerment, measured by proportion of parliamentary seats occupied by females and proportion of adult females and males aged 25 years and older with at least some secondary education; and economic status, expressed as labour market participation and measured by labour force participation rate of female and male populations aged 15 years and older.
+More info about GII here: http://hdr.undp.org/en/content/gender-inequality-index-gii
+
+Data has now 195 observations with 19 variables. 
+There are also two new variables  "Edu2.FM" and "Labo.FM". 
+
+I have renamed the variables with (shorter) descriptive names:
+
+VARIABLE           |   NAME
+-----------------  | -------------------------------------------------------------------------------
+ ```"HDI.Rank"```  |  ---
+ ```"Country"```   |  ---
+ ```"Human.Development.Index..HDI."``` |  ```"HDI"```
+ ```"Life.Expectancy.at.Birth"```      |  ```"Life.Exp"```
+ ```"Expected.Years.of.Education"```   |  ```"Edu.Exp"```
+ ```"Mean.Years.of.Education"```       |  ```"Edu.Mean"```   
+ ```"Gross.National.Income..GNI..per.Capita"```   |   ```"GNI"```   
+ ```"GNI.per.Capita.Rank.Minus.HDI.Rank"```       |   ```"GNI.Minus.Rank"```  
+ ```"GII.Rank"```       |  ---
+ ```"Gender.Inequality.Index..GII."```  |  ```"GII"```
+ ```"Maternal.Mortality.Ratio"```   |  ```"Mat.Mor"```  
+ ```"Adolescent.Birth.Rate"``` |   ```"Ado.Birth"```
+ ```"Percent.Representation.in.Parliament"```     | ```"Parli.F"```
+ ```"Population.with.Secondary.Education..Female."```      |   ```""Edu2.F""``` 
+ ```"Population.with.Secondary.Education..Male."``` |  ```"Edu2.M"```
+ ```"Labour.Force.Participation.Rate..Female."```   |  ```"Labo.F"```
+ ```"Labour.Force.Participation.Rate..Male."  ```       |  ```"Labo.M"``` 
+  ```"The ratio of Female and Male populations with secondary education in each country"```   |  ```"Edu2.FM"```
+ ```"the ratio of labour force participation of females and males in each country "``` |  ```"Labo.FM"```   
+ 
+### Datawrangling part2 / datawrangling continues
+Code for this week datawrangling is here:
+https://github.com/elmeris/IODS-project/blob/master/data/human2.R 
+
+Please review my datawrangling exercise for this week from link above.
+The data have now 155 observations and 8 variables as it should.
+
+## Analysis
+
+I think my datawrangling was successful. However, for the sake of certainty, I will upload wrangled data for this exercise. I will name this data human3.
+
+```{r}
+human3 <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", sep  =",", header = T)
+str(human3)
+```
+
+Looks as it should.
+
+### Task 1 / A graphical overview of the data and  summaries of the variables in the data
+
+```{r}
+library(MASS)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(GGally)
+library(corrplot)
+```
+
+```{r}
+ggpairs(human3)
+cor(human3) %>% corrplot
+```
+
+```{r}
+summary(human3)
+```
+**Describtion**
+Graphs and correlation matrix visualization shows us correlations between the variables. For example:
+The strongest correlations are between:
+- expected years of education and life expectancy
+- maternal mortality ratio and adolescent birth rate
+The strongest negative correlations are between:
+- maternal mortality ratio and life expectancy
+- life expectancy and adolescent birth rate
+Summaries are shown in the table above.
+
+### Task 2 / Principal component analysis (PCA) on the not standardized human data. Variability captured by the principal components. Biplot displaying the observations by the first two principal components (PC1 coordinate in x-axis, PC2 coordinate in y-axis), along with arrows representing the original variables.
+
+```{r}
+pca_human1 <- prcomp(human3)
+biplot(pca_human1, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
+```
+```{r}
+s<-summary(pca_human1)
+s
+```
+
+```{r}
+pca_pr_nonst <- round(100*s$importance[2,], digits = 1)
+pc_lab_nonst <- paste0(names(pca_pr_nonst), " (", pca_pr_nonst, "%)")
+```
+
+```{r}
+biplot(pca_human1, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab_nonst[1], ylab = pc_lab_nonst[2])
+```
+
+### Task 3,4 / Standardizing the variables in the human data and repeat the above analysis. 
+
+```{r}
+human_std <- scale(human3)
+```
+
+```{r}
+pca_human2 <- prcomp(human_std)
+```
+
+```{r}
+s<-summary(pca_human2)
+s
+```
+
+```{r}
+pca_pr <- round(100*s$importance[2,], digits = 1)
+pc_lab <- paste0(names(pca_pr), " (", pca_pr, "%)")
+```
+
+```{r}
+biplot(pca_human2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+```{r}
+pca_human2
+```
+
+***Describtion(task2/3/4)***
+
+In principal component analysis (PCA) on the not standardized human data it seems that GNI has the biggest variance. PC1 captures all the variance.
+
+After standardisation PCA looks much better. Now it seems that GNI is not the only variable that stands out. 
+
+The results are different because PCA assumes that the variables with higher variance are more important for those with lower variance. 
+
+Now we can interpret results of PCA.
+
+- There is a small angle between Maternal mortality ratio and Adolescent Birth Rate point meaning they are correlated positively. Thease variables are strongly contribute to PC1.
+i.e. in the countries where maternal mortality ratio is high also adolescent birth rate is high.
+
+- There is a small angle between Female Labour Force Participation Rate and Percent Female Representation in Parliament meaning they are correlated positively with each other but negatively correlated with Female Population with Secondary Education, Gross National Income per Capita, Expected Years of Education and Life Expectancy at Birth. Thease variables are strongly contribute to PC2.
+i.e. in the countries where females are in the parliament they are active in labour force also.
+
+- There is a small angle between Female Population with Secondary Education, Gross National Income per Capita, Expected Years of Education and Life Expectancy at Birth meaning they are correlated positively with each other but and negatively correlated with maternal mortality ratio and adolescent birth rate. Thease variables are contributing negatively to PC1.
+i.e. in the countries where women have secondary education also GNI is higher, and expect years of education is higher and life expectancy is higher.
+
+PC1: Most meaning full components are life expectancy and maternal mortality. These arrows goes other direction.
+i.e. in the countries where maternal mortality ratio is high the life life expectancy is low.
+
+PC2: Most meaning full components are Female Labour Force Participation Rate and Percent Female Representation in Parliament. These arrows goes same direction.
+i.e. in the countries where females are in the parliament they are active in labour force also.
+
+## Task 5 / Tea time!
+
+```{r}
+library(FactoMineR)
+data("tea")
+```
+
+```{r}
+str(tea)
+dim(tea)
+summary(tea)
+```
+**Describtion**
+Data has 300 onservations and 36 variables. The data used here concern a questionnaire on tea. We asked to 300 individuals how they drink tea (18 questions), what are their product's perception (12 questions) and some personal details (4 questions).
+Rows represent the individuals, columns represent the different questions. The first 18 questions are active ones, the 19th is a supplementary quantitative variable (the age) and the last variables are supplementary categorical variables.
+
+```{r}
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- select(tea, one_of(keep_columns))
+summary(tea_time)
+str(tea_time)
+dim(tea_time)
+```
+
+
+```{r}
+gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+**Describtion**
+Now the data has 300 onservations and 6 variables. 
+Graphs shows
+- most individuals drinks tea in bag form
+- most individuals tee alone 
+- most individuals do not drink in lunch time
+- there is not so big difference between individuals who uses sugar and who doesnt
+- most individuals drinks Earl Grey
+- most individuals drink in the chain store
+
+```{r}
+mca <- MCA(tea_time, graph = FALSE)
+summary(mca)
+```
+
+```{r}
+plot(mca, invisible=c("ind"), habillage = "quali")
+```
+***Describtion***
+First part (Eigenvalues) there is the proportion of the data variance explained by each 11 dimension.
+Dim 1: explains 15% of the varaince, 
+Dim 2: 14%,
+Dim 3: 12%,
+and so on...
+
+Second part (Categories (the 10 first)) there is the information about the contribution of the 10 first individuals to the first three dimensions.
+
+Third part (the categorical variables) there is the squared correlation between each variable and the dimensions. 
+
+Biplot: 
+- Variables like: other, chain store+tea shop, tea bag+unpackaged, lunch, lemon, green, unpackaged, tea shop are contributed to the Dim 2.
+- Variables like: black, tea bag, chain store are contributing negatively to Dim 1.
