@@ -69,11 +69,11 @@ Looks as it should.
 ```{r}
 library(MASS)
 library(tidyr)
-library(dplyr)
 library(stringr)
 library(ggplot2)
 library(GGally)
 library(corrplot)
+library(tidyverse)
 ```
 
 ```{r}
@@ -184,12 +184,14 @@ Rows represent the individuals, columns represent the different questions. The f
 
 ```{r}
 keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
-tea_time <- select(tea, one_of(keep_columns))
+tea_time <- dplyr::select(tea, one_of(keep_columns))
+```
+
+```{r}
 summary(tea_time)
 str(tea_time)
 dim(tea_time)
 ```
-
 
 ```{r}
 gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
