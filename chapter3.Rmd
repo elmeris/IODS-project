@@ -1,3 +1,10 @@
+---
+title: "chapter3.Rmd"
+author: "Elmeri Santala"
+date: "11/17/2019"
+output: html_document
+---
+
 # Exercise3: Analysis
 
 **Data wrangling**
