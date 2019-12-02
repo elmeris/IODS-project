@@ -2,58 +2,58 @@
 #Exercise4 
 #Data wrangling for week 5
 #24.11.2019
-#data source 
 
-# reading the human data
-human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human1.txt", sep  =",", header = T)
-
-# the (column) names of human
-names(human)
-
-# the structure of human
-str(human)
-
-# summaries of the variables
-summary(human)
-
-# accessing the stringr package
+# accessing to the packages
+library(MASS)
+library(tidyr)
+library(dplyr)
 library(stringr)
 
-# the structure of the GNI column in 'human'
-str(human$GNI)
+# Reading two datasets
+humandev <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
+gii <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/gender_inequality.csv", stringsAsFactors = F, na.strings = "..")
 
-# removing the commas from GNI and print out a numeric version of it
-str_replace(human$GNI, pattern=",", replace ="") %>% as.numeric
+# Exploring the datasets
+str(humandev)
+dim(humandev)
+summary(humandev)
+colnames(humandev)
+str(gii)
+dim(gii)
+summary(gii)
+colnames(gii)
 
-# columns i want to keep
-keep <- c("Country", "Edu2.FM", "Labo.FM", "Life.Exp", "Edu.Exp", "GNI", "Mat.Mor", "Ado.Birth", "Parli.F")
+# Renaming humandev data variables shorter
+names(humandev)[names(humandev) == "Human.Development.Index..HDI."] <- "HDI"
+names(humandev)[names(humandev) == "Life.Expectancy.at.Birth"] <- "Life.Exp"
+names(humandev)[names(humandev) == "Expected.Years.of.Education"] <- "Edu.Exp"
+names(humandev)[names(humandev) == "Mean.Years.of.Education"] <- "Edu.Mean"
+names(humandev)[names(humandev) == "Gross.National.Income..GNI..per.Capita"] <- "GNI"
+names(humandev)[names(humandev) == "GNI.per.Capita.Rank.Minus.HDI.Rank"] <- "GNI.Minus.Rank"
 
-# the 'keep' columns
-human <- select(human, one_of(keep))
+# Renaming gii data variables shorter
+names(gii)[names(gii) == "Gender.Inequality.Index..GII."] <- "GII"
+names(gii)[names(gii) == "Maternal.Mortality.Ratio"] <- "Mat.Mor"
+names(gii)[names(gii) == "Adolescent.Birth.Rate"] <- "Ado.Birth"
+names(gii)[names(gii) == "Percent.Representation.in.Parliament"] <- "Parli.F"
+names(gii)[names(gii) == "Population.with.Secondary.Education..Female."] <- "Edu2.F"
+names(gii)[names(gii) == "Population.with.Secondary.Education..Male."] <- "Edu2.M"
+names(gii)[names(gii) == "Labour.Force.Participation.Rate..Female."] <- "Labo.F"
+names(gii)[names(gii) == "Labour.Force.Participation.Rate..Male."] <- "Labo.M"
 
-# printing out a completeness indicator of the 'human' data
-complete.cases(human)
+# Create 2 new variables in gii data
+gii <- mutate(gii, Edu2.FM = Edu2.F / Edu2.M)
+gii<- mutate(gii, Labo.FM = Labo.F / Labo.M)
 
-# printing out the data along with a completeness indicator as the last column
-data.frame(human[-1], comp = complete.cases(human))
+# Join the two datasets
+join_by <- c("Country")
+human <- inner_join(humandev, gii, by = join_by, suffix = c(".humandev", ".gii"))
 
-# filtering out all rows with NA values
-human_ <- filter(human, complete.cases(human))
+# Checking the data
+dim(human)
 
-# the last 10 observations
-tail(human, 10)
+# Joined data has now 195 observations with 19 variables.
 
-# last indice I want to keep
-last <- nrow(human) - 7
+# Save the data
+write.csv(human, "~/IODS-project/Data/human.csv")
 
-# choosing everything until the last 7 observations
-human_ <- human[1:last, ]
-
-# adding countries as rownames
-rownames(human) <- human$Country
-
-# ensure the structure
-str(human)
-
-# save data
-write.csv(human, file = "data/human.csv", row.names=FALSE)
