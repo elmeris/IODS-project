@@ -51,6 +51,7 @@ human <- inner_join(humandev, gii, by = join_by, suffix = c(".humandev", ".gii")
 
 # Checking the data
 dim(human)
+colnames(human)
 
 # Joined data has now 195 observations with 19 variables.
 
